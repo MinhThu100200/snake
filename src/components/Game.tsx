@@ -4,7 +4,10 @@ import { Colors } from "../styles/colors";
 import { PanGestureHandler } from "react-native-gesture-handler";
 import { Coordinate, Direction, GestureEventType } from "../types/types";
 import Snake from "./Snake";
+import Food from "./Food";
 import { checkGameOver } from "../utils/checkGameOver";
+import { checkEatFoods } from "../utils/checkEatFoods";
+import { randomFoodPosition } from "../utils/randomFoodPosition";
 
 const SNAKE_INITIAL_POSITION = [{ x: 5, y: 5 }];
 const FOOD_INITIAL_POSITION = { x: 5, y: 20 };
@@ -20,6 +23,7 @@ export default function Game(): JSX.Element {
   const [food, setFood] = React.useState<Coordinate>(FOOD_INITIAL_POSITION);
   const [isPaused, setIsPaused] = React.useState<boolean>(false);
   const [isGameOver, setIsGameOver] = React.useState<boolean>(false);
+  const [score, setScore] = React.useState<number>(0);
   React.useEffect(() => {
     if (!isGameOver) {
       const intervalId = setInterval(() => {
@@ -52,7 +56,13 @@ export default function Game(): JSX.Element {
       default:
         break;
     }
-    setSnake([newHead, ...snake.slice(0, -1)]);
+    if (checkEatFoods(newHead, food, 2)) {
+      setFood(randomFoodPosition(GAME_BOUNDS.xMax, GAME_BOUNDS.yMax));
+      setSnake([newHead, ...snake]);
+      setScore(score + SCORE_INCREMENT);
+    } else {
+      setSnake([newHead, ...snake.slice(0, -1)]);
+    }
   };
   const handleGesture = (event: GestureEventType) => {
     const { translationX, translationY } = event.nativeEvent;
@@ -80,6 +90,7 @@ export default function Game(): JSX.Element {
       <SafeAreaView style={styles.container}>
         <View style={styles.spaces}>
           <Snake snake={snake} />
+          <Food x={food.x} y={food.y} />
         </View>
       </SafeAreaView>
     </PanGestureHandler>
